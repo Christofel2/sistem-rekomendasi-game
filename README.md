@@ -133,10 +133,12 @@ Wordcloud menunjukkan menunjukkan bahwa deskripsi game umumnya menekankan pada p
 Dari scatterplot diatas bisa melihat bahwa jumlah game yang dirilis meningkat secara signifikan dari waktu ke waktu,terutama pada tahun 2010-an.Untuk distribusi rating game dengan rating 4 dan 5 konsisten terus sepanjang waktu namun untuk tidak ditemukan pola antara tahun rilis dengan rating.
 
 ![10 Game Rating Tertinggi](https://github.com/Christofel2/sistem-rekomendasi-game/blob/main/images/10_game.png?raw=true)
+
 Barchart diatas menunjukkan 10 Game dengan Rating tertinggi.
 
 ### EDA Univariate dan Multivariate df_rating
 ![Distribusi rating user](https://github.com/Christofel2/sistem-rekomendasi-game/blob/main/images/rating1-5.png?raw=true)
+
 Barchart diatas menujukkan bahwa Rating 1-5 memiliki distribusi yang seimbang.
 
 ![Distribusi jumlah Rating per user](https://github.com/Christofel2/sistem-rekomendasi-game/blob/main/images/distribusi_jumlah_rating_user.png?raw=true)
