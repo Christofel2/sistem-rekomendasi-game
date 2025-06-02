@@ -549,6 +549,7 @@ $$
 - **Jumlah item relevan dalam top-5**: 3
 
 **Rumus:**
+
 $$
 \text{Precision@5} = \frac{3}{5} = 0.60
 $$
