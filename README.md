@@ -133,7 +133,6 @@ Wordcloud menunjukkan menunjukkan bahwa deskripsi game umumnya menekankan pada p
 Dari scatterplot diatas bisa melihat bahwa jumlah game yang dirilis meningkat secara signifikan dari waktu ke waktu,terutama pada tahun 2010-an.Untuk distribusi rating game dengan rating 4 dan 5 konsisten terus sepanjang waktu namun untuk tidak ditemukan pola antara tahun rilis dengan rating.
 
 ![10 Game Rating Tertinggi](https://github.com/Christofel2/sistem-rekomendasi-game/blob/main/images/10_game.png?raw=true)
-
 Barchart diatas menunjukkan 10 Game dengan Rating tertinggi.
 
 ### EDA Univariate dan Multivariate df_rating
@@ -176,7 +175,42 @@ Langkah ini merupakan bagian dari proses data preparation yang bertujuan untuk m
 
 Tahapan ini diperlukan karena dalam metode Content-Based Filtering (CBF), fitur seperti genre akan digunakan untuk membangun representasi konten item (game), misalnya menggunakan metode TF-IDF atau teknik pemrosesan teks lainnya. Dengan format list, proses ekstraksi fitur dan perhitungan kemiripan antar item menjadi lebih terstruktur dan akurat.
 
-Pada bagian ini Anda menerapkan dan menyebutkan teknik data preparation yang dilakukan. Teknik yang digunakan pada notebook dan laporan harus berurutan.
+4. Ekstraksi Fitur TF-IDF dari Kolom 'genres'
+```python
+tfidf = TfidfVectorizer(stop_words='english')
+# Melakukan perhitungan idf pada games_cbf 'genres'
+tfidf.fit(games_cbf['genres'])
+tfidf.get_feature_names_out() 
+```
+Pada tahap ini dilakukan proses data preparation menggunakan teknik TF-IDF Vectorization dengan menghapus stop words bahasa Inggris. Langkah ini bertujuan untuk mengubah data teks pada kolom genres menjadi representasi numerik yang dapat digunakan dalam analisis kesamaan antar game. Pertama, objek TfidfVectorizer diinisialisasi dengan parameter stop_words='english' untuk menghilangkan kata-kata umum yang tidak relevan. Selanjutnya, fungsi fit() diterapkan pada kolom genres untuk menghitung nilai IDF dari setiap genre yang muncul. Setelah proses ini, fitur-fitur unik dari genre dapat diperoleh menggunakan get_feature_names_out(). Tahapan ini penting karena memungkinkan sistem rekomendasi berbasis content-based filtering menghitung kemiripan antar game berdasarkan genre secara lebih akurat.
+
+5. Transformasi Teks 'genres' Menjadi Matriks TF-IDF
+```python
+tfidf_matrix = tfidf.fit_transform(games_cbf['genres'])
+tfidf_matrix.shape
+```
+Setelah melakukan proses fitting, tahap selanjutnya adalah mengubah data genre menjadi bentuk matriks menggunakan fungsi fit_transform(). Pada baris ini, objek tfidf diterapkan pada kolom genres untuk menghasilkan TF-IDF matrix, yaitu representasi numerik dari setiap game berdasarkan genre-nya. Setiap baris pada matriks merepresentasikan satu game, dan setiap kolom mewakili satu genre unik yang telah diproses sebelumnya. Hasil dari tfidf_matrix.shape menunjukkan dimensi matriks, yang memberikan informasi jumlah game (baris) dan jumlah fitur genre (kolom). Proses ini merupakan bagian penting dari data preparation karena memungkinkan sistem melakukan perhitungan matematis, seperti mengukur kemiripan antar game dalam sistem rekomendasi berbasis konten.
+
+6. Konversi Matriks TF-IDF ke Bentuk Dense (Matriks Penuh)
+```python
+tfidf_matrix = tfidf.fit_transform(games_cbf['genres'])
+tfidf_matrix.shape
+```
+Setelah mendapatkan TF-IDF matrix, langkah berikutnya adalah mengubah format sparse matrix menjadi bentuk matriks penuh (dense) menggunakan fungsi todense(). Hal ini dilakukan agar isi dari matriks dapat lebih mudah dibaca, ditelusuri, atau divisualisasikan, terutama saat proses eksplorasi data atau debugging. Dalam format dense, setiap nilai menunjukkan bobot TF-IDF suatu genre terhadap sebuah game: semakin tinggi nilainya, semakin penting genre tersebut bagi game itu.
+
+7. Visualisasi Sampel Matriks TF-IDF dalam Bentuk DataFrame
+```python
+# Membuat DataFrame untuk melihat TF-IDF matrix
+# Kolom diisi dengan genre
+# Baris diisi dengan nama game
+
+pd.DataFrame(
+    tfidf_matrix.todense(),
+    columns=tfidf.get_feature_names_out(),
+    index=games_cbf.name
+).sample(22, axis=1).sample(10, axis=0)
+```
+Langkah ini bertujuan untuk menampilkan hasil TF-IDF pada sebuah DataFrame. Nilai-nilai TF-IDF dari setiap game diubah ke format dense dan kemudian dikonversi menjadi tabel dengan baris berupa nama game dan kolom berupa genre unik yang telah dihasilkan sebelumnya. Dengan menggunakan sample(), ditampilkan sebagian kecil dari data secara acak, yaitu 22 genre (kolom) dan 10 game (baris), agar lebih mudah diamati. Tahapan ini termasuk dalam proses visualisasi dan eksplorasi data setelah data preparation, yang berguna untuk memastikan bahwa hasil transformasi TF-IDF sudah sesuai dan representatif sebelum digunakan dalam sistem rekomendasi.
 
 ### Data Preparation df_rating untuk Content Based Filtering
 1. Mengubah Nama kolom
@@ -288,21 +322,13 @@ Tahapan ini merupakan pembagian dataset dengan porsi 80:20,tahapan ini sangat pe
 ## Modeling
 ### 1. Content-Based Filtering
 Content-Based Filtering adalah salah satu metode dalam sistem rekomendasi yang merekomendasikan item kepada pengguna berdasarkan kemiripan antara item yang disukai sebelumnya dan item lainnya, berdasarkan fitur atau konten dari item tersebut.
-Model Content-Based Filtering ini diimplementasikan dengan menggunakan TF-IDF dan Cosine Similarity
+Model Content-Based Filtering ini diimplementasikan dengan menggunakan Cosine Similarity lewat hasil data preparation TF-IDF
 
 **Cara Kerja**:
 1. Informasi dari game(yaitu genre game) diolah menjadi vektor dengan menggunakan TF-IDF(Term Frequency-Inverse Document Frequency).Hasilnya akan didapat matriks berukuran 5000 x 22 yang akan menunjukkan bobot masing-masing genre terhadap game.
 2. Kemudian dihitung dengan cosine similarity sebagai metrik untuk mengukur kemiripan antar game.Hasil matriksnya adalah 5000 x 5000 yang akan menunjukkan seberapa mirip kedua game berdasarkan genre.
 3. Game terdekat/memiliki nilai kemiripan tertinggi akan direkomendasikan ke user.
 
-```python
-tfidf = TfidfVectorizer(stop_words='english')
-# Melakukan perhitungan idf pada games_cbf 'genres'
-tfidf.fit(games_cbf['genres'])
-tfidf.get_feature_names_out()
-tfidf_matrix = tfidf.fit_transform(games_cbf['genres'])
-tfidf_matrix.shape
-```
 ```python
 cosine_sim = cosine_similarity(tfidf_matrix)
 cosine_sim
@@ -425,32 +451,37 @@ class RecommenderNet(Model):
 
 **Contoh Hasil Rekomendasi:**
 
-Untuk pengguna dengan ID user_2378, sistem menampilkan:
-1. Game dengan rating tertinggi yang telah diberikan oleh pengguna
+### Untuk pengguna dengan ID `user_5077`, sistem menampilkan:
+1. Game dengan rating tertinggi yang telah diberikan oleh pengguna  
 2. Top 10 rekomendasi game berdasarkan prediksi model
 
-**Game dengan Rating Tertinggi dari Pengguna**
-| Judul Game                        | Genre                                                    |
-|----------------------------------|----------------------------------------------------------|
-| Lone Survivor: The Director's Cut| Action &#124; Adventure &#124; RPG &#124; Simulation &#124; Indie |
-| The First Tree                   | Adventure &#124; Indie                                   |
-| Sniper Elite 5                   | Action &#124; Shooter &#124; Adventure                   |
-| Confrontation                    | Action &#124; RPG &#124; Strategy                        |
-| Rusty Lake Paradise              | Adventure &#124; Indie &#124; Puzzle                     |
+---
 
-**Top-10 Game Rekomendasi untuk User**
+### **Game dengan Rating Tertinggi dari Pengguna**
+| Judul Game                      | Genre                                                    |
+|--------------------------------|----------------------------------------------------------|
+| South Park: The Fractured But Whole | Adventure &#124; RPG                                    |
+| Drones, The Human Condition    | Action &#124; Shooter &#124; Indie                       |
+| Yakuza 4                       | Action                                                   |
+| RIDGE RACER Unbounded          | Action &#124; Racing                                     |
+| Agony UNRATED                  | Action &#124; Adventure &#124; Indie                     |
+
+---
+
+### **Top-10 Game Rekomendasi untuk User**
 | No | Judul Game                                     | Genre                                                   |
 |----|------------------------------------------------|----------------------------------------------------------|
-| 1  | Wolfenstein: The New Order                     | Action &#124; Shooter                                   |
-| 2  | Mafia II                                       | Action &#124; Shooter                                   |
-| 3  | Borderlands 3                                  | Action &#124; Shooter &#124; Adventure &#124; RPG       |
-| 4  | Streets of Rage 4                              | Action &#124; Adventure &#124; Fighting &#124; Indie    |
-| 5  | Survarium                                      | Action &#124; RPG &#124; Massively Multiplayer          |
-| 6  | Caster                                         | Action &#124; Adventure &#124; RPG &#124; Strategy &#124; Casual &#124; Indie |
-| 7  | Team Sonic Racing                              | Racing                                                  |
-| 8  | Crime Cities                                   | Action &#124; Simulation &#124; Racing &#124; Arcade    |
-| 9  | Legends of Eisenwald                           | Adventure &#124; RPG &#124; Strategy &#124; Indie       |
-| 10 | Dungeons & Dragons: Chronicles of Mystara      | Action &#124; Adventure &#124; RPG                      |
+| 1  | Borderlands 3                                  | Action &#124; Shooter &#124; Adventure &#124; RPG       |
+| 2  | Guns of Icarus Online                          | Action &#124; Simulation &#124; Indie                   |
+| 3  | Capsized                                       | Action &#124; Adventure &#124; Indie &#124; Platformer  |
+| 4  | Hard Reset Redux                               | Action &#124; Adventure                                 |
+| 5  | Caster                                         | Action &#124; Adventure &#124; RPG &#124; Strategy &#124; Casual &#124; Indie |
+| 6  | Swag and Sorcery                               | Action &#124; Strategy &#124; Simulation &#124; Indie   |
+| 7  | Legends of Eisenwald                           | Adventure &#124; RPG &#124; Strategy &#124; Indie       |
+| 8  | Slingshot people                               | Action &#124; Simulation &#124; Casual &#124; Indie     |
+| 9  | Dungeons & Dragons: Chronicles of Mystara      | Action &#124; Adventure &#124; RPG                      |
+| 10 | Propagation VR                                 | Action                                                  |
+
 
 ## Evaluation
 ### Evaluasi Content-Based Filtering
@@ -575,17 +606,17 @@ print(f"RMSE      : {results[1]:.4f}")
 ```
 
 ```
-1711/1711 ━━━━━━━━━━━━━━━━━━━━ 4s 2ms/step - loss: 0.1399 - root_mean_squared_error: 0.3572
+1711/1711 ━━━━━━━━━━━━━━━━━━━━ 4s 2ms/step - loss: 0.1365 - root_mean_squared_error: 0.3563
 [Hasil Evaluasi terhadap Data Validasi]
-Loss (MSE): 0.1403
-RMSE      : 0.3577
+Loss (MSE): 0.1369
+RMSE      : 0.3569
 ```
-Hasil Evaluasi Collaborative Filtering menunjukkan performa pada data validasi dengan nilai Loss(MSE) sebesar 0.1403 dan RMSE sebesar 0.3557.Nilai MSE tersebut menunjukkan rata-rata kuadrat selisih antara rating aktual dan prediksi cukup kecil, yang berarti model memiliki tingkat kesalahan yang rendah dalam memprediksi rating user terhadap game.Dan Nilai RMSE,artinya secara rata-rata, prediksi rating model hanya meleset sekitar 0.36 poin dari rating asli, yang termasuk cukup baik untuk skala normalized rating (0–1).
+Hasil Evaluasi Collaborative Filtering menunjukkan performa pada data validasi dengan nilai Loss(MSE) sebesar 0.1369 dan RMSE sebesar 0.3569.Nilai MSE tersebut menunjukkan rata-rata kuadrat selisih antara rating aktual dan prediksi cukup kecil, yang berarti model memiliki tingkat kesalahan yang rendah dalam memprediksi rating user terhadap game.Dan Nilai RMSE,artinya secara rata-rata, prediksi rating model hanya meleset sekitar 0.35 poin dari rating asli, yang termasuk cukup baik untuk skala normalized rating (0–1).
 
 
 ## Kesimpulan
 Proyek ini berhasil mengembangkan sistem rekomendasi game dengan mengimplementasikan dua algoritma yaitu Content-Based Filtering (CBF) dan Collaborative Filtering (CF).Model Content-Based Filtering mendapatkan performa yang cukup baik dengan precision sebesar 60% namun kedepannya dapat ditingkatkan lagi,sedangkan model Collaborative Filtering
-memberikan hasil evaluasi berupa nilai MSE sebesar 0.1403 dan RMSE 0.3577 hasil ini cukup baik namun masih bisa ditingkatkan kedepannya.Kedua Model juga mampu memberikan Top-N Rekomendasi game kepada user.
+memberikan hasil evaluasi berupa nilai MSE sebesar 0.1369 dan RMSE 0.3569 hasil ini cukup baik namun masih bisa ditingkatkan kedepannya.Kedua Model juga mampu memberikan Top-N Rekomendasi game kepada user.
 
 Untuk saran peningkatan mungkin dapat dicoba dengan menggabungkan kedua algoritma ini menjadi pendekatan hybrid diharapkan dapat menyelesaikan kelemahan masing-masing algoritma sehingga semakin dapat membantu user menemukan game yang cocok untuk mereka.
 
