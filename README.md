@@ -155,6 +155,7 @@ columns_to_drop = ['platforms', 'released','cover_image', 'game_link', 'metacrit
 games_cbf = df_game.drop(columns=columns_to_drop)
 ```
 Kami menghapus kolom-kolom seperti platforms, released, cover_image, game_link, metacritic_url, year, dan description karena informasi di dalamnya tidak cukup relevan dan terlalu banyak noise untuk model Content-Based Filtering yang kami terapkan. Langkah ini juga bertujuan untuk menyederhanakan dimensi dataset agar proses analisis lebih efisien dan fokus hanya pada fitur yang diperlukan.
+
 2. Imputas Missing Values(genres)
 ```python
 #2.Imputasi Missing Values
@@ -166,6 +167,7 @@ print(games_cbf.isnull().sum())
 ```
 Langkah ini merupakan bagian dari proses data preparation untuk menangani nilai yang hilang (missing values) pada kolom genres. Nilai kosong pada kolom tersebut diisi dengan string 'Unknown' menggunakan metode imputasi sederhana.
 Tahapan ini penting dilakukan karena kolom genres merupakan fitur utama dalam pendekatan Content-Based Filtering (CBF). Fitur ini digunakan untuk menghitung kemiripan antar item (dalam hal ini, game) berdasarkan konten atau atribut yang dimiliki. Jika terdapat nilai kosong, proses representasi konten—misalnya menggunakan metode TF-IDF—dapat terganggu dan menghasilkan output yang kurang akurat. Oleh karena itu, memastikan semua data pada kolom genres terisi adalah langkah krusial dalam menyiapkan dataset untuk CBF.
+
 3. Mengubah Genre menjadi List 
 ```python
 #3.Ubah Genre Jadi List
